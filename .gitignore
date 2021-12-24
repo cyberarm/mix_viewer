@@ -1,0 +1,4 @@
+*.dat
+*.mix
+data/*
+!data/.gitkeep
