@@ -1,6 +1,41 @@
 class MixViewer
   class States
     class Interface < CyberarmEngine::GuiState
+      ITEM_BUTTON = {
+        text_align: :left,
+        width: 1.0,
+        height: 24,
+        text_size: 20,
+        padding_bottom: 2,
+        padding_top: 2,
+        border_thickness: 0,
+        margin_top: 0,
+        margin_left: 0,
+        margin_right: 0,
+        background: 0xff_454545,
+        hover: {
+          background: 0xff_656565,
+        },
+        active: {
+          background: 0xff_353535
+        }
+      }
+
+      MENU_BUTTON = {
+        text_size: 18,
+        height: 1.0,
+        padding_top: 2,
+        padding_bottom: 2,
+        border_thickness: 0,
+        background: 0xff_454545,
+        hover: {
+          background: 0xff_656565,
+        },
+        active: {
+          background: 0xff_353535
+        }
+      }
+
       def setup
         background 0xff_eeeeee
         self.show_cursor = true
@@ -9,7 +44,7 @@ class MixViewer
         @menu_bar = flow(width: 1.0, height: 24) do
           background 0xff_252525
 
-          button "File", text_size: 18, height: 1.0, padding_top: 2, padding_bottom: 2, background: 0xff_454545, border_thickness: 0 do
+          button "File", **MENU_BUTTON do
           end
         end
 
@@ -59,13 +94,13 @@ class MixViewer
             GC.start
             entries = Dir.entries(path)
 
-            files = entries.select { |e| !File.directory?("#{path}/#{e}") }.sort
-            folders = entries.select { |e| File.directory?("#{path}/#{e}") }.sort
+            files = entries.select { |e| !File.directory?("#{path}/#{e}") }.sort_by { |f| f.downcase }
+            folders = entries.select { |e| File.directory?("#{path}/#{e}") }.sort_by { |f| f.downcase }
 
             entries = (folders + files).flatten
 
             entries.each do |ptr|
-              button ptr, tip: ptr, text_align: :left, width: 1.0, height: 24, text_size: 20, padding_bottom: 2, padding_top: 2, border_thickness: 0, margin_top: 0, margin_left: 0, margin_right: 0 do |btn|
+              button ptr, tip: ptr, **ITEM_BUTTON do |btn|
                 entry_path = "#{path}/#{ptr}"
 
                 if File.directory?(entry_path)
@@ -80,8 +115,8 @@ class MixViewer
             puts "LOADING #{path} MIXER..."
             @reader = Mixer::Reader.new(file_path: path, metadata_only: true)
 
-            ([Mixer::Package::File.new(name: "."), Mixer::Package::File.new(name: "..")] + @reader.package.files).flatten.each do |file|
-              button file.name, tip: file.name, text_align: :left, width: 1.0, height: 24, text_size: 20, padding_bottom: 2, padding_top: 2, border_thickness: 0, margin_top: 0, margin_left: 0, margin_right: 0 do |btn|
+            ([Mixer::Package::File.new(name: "."), Mixer::Package::File.new(name: "..")] + @reader.package.files.sort_by { |f| f.name.downcase }).flatten.each do |file|
+              button file.name, tip: file.name, **ITEM_BUTTON do |btn|
 
                 if file.name == "." || file.name == '..'
                   populate_navigation(path: "#{File.dirname(path)}/#{file.name}")
@@ -121,7 +156,7 @@ class MixViewer
             when ".mix", ".dat"
               populate_navigation(path: file)
             else
-              para File.read(file, 10_000)
+              para File.read(file, 100_000)
             end
           end
 
