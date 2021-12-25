@@ -4,6 +4,8 @@ rescue LoadError
   require "cyberarm_engine"
 end
 
+require "rsvg2"
+
 require_relative "lib/window"
 require_relative "lib/mixer"
 require_relative "lib/dds"

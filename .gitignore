@@ -2,3 +2,5 @@
 *.mix
 data/*
 !data/.gitkeep
+*
+!*.rb

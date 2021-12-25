@@ -126,7 +126,7 @@ class MixViewer
                     File.write(temp_path, File.read(path, file.content_length, file.content_offset))
                     populate_content(file: temp_path)
                   ensure
-                    File.delete(temp_path) if File.exists?(temp_path)
+                    # File.delete(temp_path) if File.exists?(temp_path)
                   end
                 end
               end
@@ -138,25 +138,47 @@ class MixViewer
       end
 
       def populate_content(file:)
-        if file.is_a?(String)
+        if file.is_a?(String) && File.exist?(file)
+          @sample&.stop
+
           @content.clear do
             p File.extname(file)
             case File.extname(file).downcase
             when ".png", ".jpeg", ".jpg", ".gif", ".tiff"
               image file, width: 1.0
+            when ".svg"
+              svg = RSVG::Handle.new_from_file(file)
+              surface = Cairo::ImageSurface.new(Cairo::FORMAT_ARGB32, svg.width, svg.height)
+              cr = Cairo::Context.new(surface)
+              cr.render_rsvg_handle(svg)
+              surface.write_to_png("data/#{File.basename(file)}")
+
+              image "data/#{File.basename(file)}", height: 1.0
+
             when ".dds"
               dds = DDS.new(file: file, shallow: true)
               img = dds.images.first
-              image Gosu::Image.from_blob(img.width, img.height, img.data), width: 1.0
+              it = Gosu.milliseconds
+              image Gosu::Image.from_blob(img.width, img.height, img.data), height: 1.0
+              puts "Image set after: #{Gosu.milliseconds - it}ms"
+
             when ".wav", ".mp3", ".ogg"
-              @sample&.stop
               @sample = Gosu::Sample.new(file).play
               para File.basename(file)
               button("Stop") { @sample.stop }
+
             when ".mix", ".dat"
               populate_navigation(path: file)
+
             else
-              para File.read(file, 100_000)
+              initial_bytes = File.read(file, 1024)
+              is_text = initial_bytes.bytes.select { |c| c >= 31 && c <= 126 }.count / initial_bytes.length.to_f
+
+              if is_text > 0.65
+                para File.read(file)
+              else
+                para "\"#{File.basename(file)}\" appears to be binary, cannot open."
+              end
             end
           end
 

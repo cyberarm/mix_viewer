@@ -43,7 +43,7 @@ class MixViewer
     DDPF_LUMINANCE   = 0x20_000
 
     Header = Struct.new(
-      :size, :flags, :height, :width, :pitch_or_linear_size,
+      :byte_size, :flags, :height, :width, :pitch_or_linear_size,
       :depth, :mipmap_count, :reserved1, :pixel_format,
       :caps, :caps2, :caps3, :caps4, :reserved2
     )
@@ -51,7 +51,7 @@ class MixViewer
     HeaderX10 = Struct.new(:value)
 
     PixelFormat = Struct.new(
-      :size, :flags, :four_cc, :rgb_bit_count,
+      :byte_size, :flags, :four_cc, :rgb_bit_count,
       :red_bit_mask, :green_bit_mask, :blue_bit_mask, :alpha_bit_mask
     )
 
@@ -117,6 +117,9 @@ class MixViewer
       @header.freeze
 
       pp @header
+
+      raise "Invalid dds header size: #{size}, expected 124" unless size == 124
+      raise "Invalid pixel format header size: #{pixel_format.byte_size}, expected 32" unless pixel_format.byte_size == 32
     end
 
     def decode_images
@@ -131,9 +134,9 @@ class MixViewer
       mipmap_count = 1 if @shallow
       block_bytes = 8
       block_bytes = 16 if pixel_format.four_cc == DXT3 || pixel_format.four_cc == DXT5
-      data_offset = @header.size + 4
+      data_offset = @header.byte_size + 4
 
-      mipmap_count.times do |i|
+      mipmap_count.times do
         data_length = [4, width].max / 4 * [4, height].max / 4 * block_bytes
 
         @data.pos = data_offset
@@ -170,7 +173,6 @@ class MixViewer
 
       size = read_u32
       flags = read_u32
-      puts @data.pos
       four_cc = read_u32
       rgb_bit_count = read_u32
       red_bit_mask = read_u32
@@ -192,7 +194,6 @@ class MixViewer
       rgba = Array.new(width * height * 4, 0)
       width_4 = (width / 4) | 0
       height_4 = (height / 4) | 0
-      offset = 0
 
       height_4.times do |h|
         width_4.times do |w|
@@ -223,8 +224,9 @@ class MixViewer
     end
 
     def interpolate_color_values(a, b, dxt1 = false)
-        first_color = convert_565_byte_to_rgb(a)
+        first_color  = convert_565_byte_to_rgb(a)
         second_color = convert_565_byte_to_rgb(b)
+
         color_values = [
           first_color[0], first_color[1], first_color[2], 255,
           second_color[0], second_color[1], second_color[2], 255
