@@ -82,7 +82,7 @@ class MixViewer
           puts "EXTRACTING..."
           @reader.package.files.each do |file|
             puts "  WRITE: #{file.name}"
-            File.write("data/#{file.name}", file.data)
+            File.write("data/#{file.name}", File.read(@path, file.content_length, file.content_offset))
           end
         end
       end
@@ -91,6 +91,8 @@ class MixViewer
         @navigation.clear do
           if path.is_a?(String) && File.exists?(path) && File.directory?(path)
             @reader = nil
+            @path = path
+
             GC.start
             entries = Dir.entries(path)
 
@@ -114,6 +116,7 @@ class MixViewer
           else
             puts "LOADING #{path} MIXER..."
             @reader = Mixer::Reader.new(file_path: path, metadata_only: true)
+            @path = path
 
             ([Mixer::Package::File.new(name: "."), Mixer::Package::File.new(name: "..")] + @reader.package.files.sort_by { |f| f.name.downcase }).flatten.each do |file|
               button file.name, tip: file.name, **ITEM_BUTTON do |btn|
