@@ -61,6 +61,7 @@ class MixViewer
     def initialize(file:, shallow:)
       f = File.open(file, "rb")
       @data = StringIO.new(f.read)
+      pp @data.internal_encoding
       f.close
 
       @shallow = shallow

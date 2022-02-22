@@ -82,12 +82,15 @@ class MixViewer
           puts "EXTRACTING..."
           @reader.package.files.each do |file|
             puts "  WRITE: #{file.name}"
-            File.write("data/#{file.name}", File.read(@path, file.content_length, file.content_offset))
+            temp_path = "data/#{file.name.gsub("\\", "_")}"
+            File.write(temp_path, File.read(@path, file.content_length, file.content_offset))
           end
         end
       end
 
       def populate_navigation(path:)
+        @path = path
+
         @navigation.clear do
           if path.is_a?(String) && File.exists?(path) && File.directory?(path)
             @reader = nil
@@ -125,7 +128,7 @@ class MixViewer
                   populate_navigation(path: "#{File.dirname(path)}/#{file.name}")
                 else
                   begin
-                    temp_path = "data/#{file.name}"
+                    temp_path = "data/#{file.name.gsub("\\", "_")}"
                     File.write(temp_path, File.read(path, file.content_length, file.content_offset))
                     populate_content(file: temp_path)
                   ensure
@@ -175,7 +178,7 @@ class MixViewer
 
             else
               initial_bytes = File.read(file, 1024)
-              is_text = initial_bytes.bytes.select { |c| c >= 31 && c <= 126 }.count / initial_bytes.length.to_f
+              is_text = initial_bytes.length.zero? ? 1.0 : initial_bytes.bytes.select { |c| c >= 31 && c <= 126 }.count / initial_bytes.length.to_f
 
               if is_text > 0.65
                 para File.read(file)

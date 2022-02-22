@@ -4,7 +4,10 @@ rescue LoadError
   require "cyberarm_engine"
 end
 
-require "rsvg2"
+begin
+  require "rsvg2"
+rescue LoadError
+end
 
 require_relative "lib/window"
 require_relative "lib/mixer"
