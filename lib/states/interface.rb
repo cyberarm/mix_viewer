@@ -60,7 +60,7 @@ class MixViewer
           end
         end
 
-        populate_navigation(path: Dir.pwd)
+        populate_navigation(path: ARGV[0] || Dir.pwd)
       end
 
       def update
@@ -83,7 +83,7 @@ class MixViewer
           @reader.package.files.each do |file|
             puts "  WRITE: #{file.name}"
             temp_path = "data/#{file.name.gsub("\\", "_")}"
-            File.write(temp_path, File.read(@path, file.content_length, file.content_offset))
+            File.binwrite(temp_path, File.binread(@path, file.content_length, file.content_offset))
           end
         end
       end
