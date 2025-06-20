@@ -92,7 +92,7 @@ class MixViewer
         @path = path
 
         @navigation.clear do
-          if path.is_a?(String) && File.exists?(path) && File.directory?(path)
+          if path.is_a?(String) && File.exist?(path) && File.directory?(path)
             @reader = nil
             @path = path
 
@@ -132,7 +132,7 @@ class MixViewer
                     File.write(temp_path, File.read(path, file.content_length, file.content_offset))
                     populate_content(file: temp_path)
                   ensure
-                    # File.delete(temp_path) if File.exists?(temp_path)
+                    # File.delete(temp_path) if File.exist?(temp_path)
                   end
                 end
               end
